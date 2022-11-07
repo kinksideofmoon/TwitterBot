@@ -47,8 +47,8 @@ class PinterestWrapper:
         self.__pins = self.__get_list_of_images_from_all_boards()
 
     def __del__(self):
-        self.logout()
-
+        # self.logout()
+        pass
     def __get_boards(self):
         _ = self.__pinterest.boards(username=self.__username)
 
