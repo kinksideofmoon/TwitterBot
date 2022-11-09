@@ -14,7 +14,7 @@ class Twitter:
     __PyTwitterAPi = None
     __TweepyAPI = None
     __UserID = None
-
+    Followers = None
     __isConnected = False
 
     class __Followers:
@@ -33,18 +33,33 @@ class Twitter:
             __number_of_tweets = int
 
             def __init__(self, username, id, number_of_tweets):
-                self.username = username
-                self.id = id
-                self.number_of_tweets = number_of_tweets
+                self.__username = username
+                self.__id = id
+                self.__number_of_tweets = number_of_tweets
 
+            @property
             def username(self):
                 return self.__username
 
+            @username.setter
+            def username_setter(self):
+                raise Warning("The username value can be set only during the initialization of the object.")
+
+            @property
             def id(self):
                 return self.__id
 
+            @id.setter
+            def id_setter(self):
+                raise Warning("The id value can be set only during the initialization of the object.")
+
+            @property
             def number_of_tweets(self):
                 return self.__number_of_tweets
+
+            @number_of_tweets.setter
+            def number_of_tweets_setter(self):
+                raise Warning("The number_of_tweets value can be set only during the initialization of the object.")
 
         class __Follower(__User):
             __followed_date = int
@@ -53,8 +68,13 @@ class Twitter:
                 super().__init__(username=username, id=id, number_of_tweets=number_of_tweets)
                 self.__followed_date = followed_date
 
+            @property
             def followed_date(self):
                 return self.__followed_date
+
+            @followed_date.setter
+            def followed_date_setter(self):
+                raise Warning("The followed_date value can be set only during the initialization of the object.")
 
         def __init__(self, PyTwitterAPI, TweepyAPI, UserID):
             self.__PyTwitterAPI = PyTwitterAPI
@@ -62,11 +82,19 @@ class Twitter:
             self.__UserID = UserID
 
             self.__load_last_followers_from_csv(Config.last_followers_cache_file)
+            self.__get_my_followers()
+            self.__check_for_new_followers()
 
-        def get_my_followers(self):
-            return self.get_followers(self.__UserID)
+        def __get_my_followers(self):
+            return self.__get_followers(self.__UserID)
 
-        def get_followers(self, user_id):
+        def get_new(self):
+            _ = []
+            for follower in self.__new_followers:
+                _.append(follower.username)
+            return _
+
+        def __get_followers(self, user_id):
 
             logging.info("Trying to get the list of current followers...")
 
@@ -116,13 +144,14 @@ class Twitter:
         def __iter__(self):
             raise NotImplemented
 
-        def check_for_new_followers(self, user_id=__UserID):
+        def __check_for_new_followers(self, user_id=__UserID):
             for follower in self.__followers:
                 for last_follower in self.__last_followers:
                     if last_follower.id == follower.id:
                         break
                 else:
                     self.__new_followers.append(follower)
+            logging.info("Found " + str(len(self.__new_followers)) + " new followers.")
 
         def __load_last_followers_from_csv(self, filename):
 
@@ -133,13 +162,13 @@ class Twitter:
                         logging.debug("---> File content: " + str(line.strip()))
                         follower_id, follower_name, number_of_tweets, followed_date = line.split(';')
                         self.__last_followers.append(self.__Follower(id=follower_id, username=follower_name,
-                                                     number_of_tweets=-1, followed_date=0))
+                                                                     number_of_tweets=-1, followed_date=0))
             except OSError as ex:
                 logging.error("I/O error on file: " + filename + ": " + ex.strerror)
             except KeyError as ex:
                 logging.error("Key error on loading the file: " + filename)
             finally:
-                logging.info("... successfully load the file. Found " + str(self.__last_followers) + " entries.")
+                logging.info("... successfully load the file. Found " + str(len(self.__last_followers)) + " entries.")
 
         def get_following(self, user_id):
 
@@ -229,6 +258,7 @@ class Twitter:
             self.__isConnected = True
 
         return __PyTwitterAPI
+
     @property
     def __get_user_id(self):
         if not self.__isConnected:
@@ -255,4 +285,3 @@ class Twitter:
             pass
         else:
             logging.debug('Media ID: ' + str(media.media_id))
-
