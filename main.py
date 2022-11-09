@@ -30,16 +30,11 @@ localconfig = Config()
 
 __twitter = Twitter(localconfig.Twitter)
 
-# print("Followers:")
+print("New followers")
 
-__twitter.Followers.get_my_followers()
-
-# for follower in __twitter.get_my_followers():
-#     print("https://twitter.com/" + follower.name)
-#     print(type(follower))
-#     # telegram_client.send(str(follower))
-
-# __twitter.check_for_new_followers()
+for follower in __twitter.Followers.get_new():
+    print(follower)
+    telegram_client.send(follower)
 
 __pinterest = PinterestWrapper(localconfig.Pinterest)
 
