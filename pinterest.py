@@ -19,6 +19,21 @@ import extras
 logging.basicConfig(format=Config.Logging.format, level=logging.ERROR)
 
 
+def download_image(image_url: str, destination_dir="./img/"):
+    a = urllib.parse.urlparse(image_url)
+    image_filename = os.path.basename(a.path)
+
+    image_file = None
+
+    try:
+        image_file = urllib.request.urlretrieve(image_url, destination_dir + image_filename)
+    except:
+        # ToDo: less generic exception
+        image_filename = None
+
+    return image_file, image_filename
+
+
 class PinterestWrapper:
 
     __pinterest = None
@@ -49,6 +64,7 @@ class PinterestWrapper:
     def __del__(self):
         # self.logout()
         pass
+
     def __get_boards(self):
         _ = self.__pinterest.boards(username=self.__username)
 
@@ -101,32 +117,42 @@ class PinterestWrapper:
         return pins
 
     def download_random_image_from_board(self, board_name: str):
-        url, src = self.get_url_of_random_image_from_list_pinterest(board_name)
-        image_file, image_filename = self.download_image(url)
+        url, src, title, description, board_link, board_name, pin = \
+            self.get_url_of_random_image_from_list_pinterest(board_name)
 
-        return image_file, image_filename, src
+        image_file, image_filename = download_image(url)
 
-    def download_image(self, image_url: str, destination_dir="./img/"):
-        a = urllib.parse.urlparse(image_url)
-        image_filename = os.path.basename(a.path)
-
-        image_file = None
-
-        try:
-            image_file = urllib.request.urlretrieve(image_url, destination_dir + image_filename)
-        except:
-            # ToDo: less generic exception
-            image_filename = None
-
-        return image_file, image_filename
+        return image_file, image_filename, src, title, description, board_link, board_name, pin
 
     def get_url_of_random_image_from_list_pinterest(self, board_name: str):
 
         pin = random.choice(self.__pins[board_name])
         image_url = str(pin['images']['orig']['url'])
         src = str(pin['link'])
-        return image_url, src
+        if (src is None or src == "") and pin["rich_summary"] is not None:
+            src = str(pin["rich_summary"]["url"])
+        if (src is None or src == "") and pin["attribution"] is not None:
+            src = str(pin["attribution"]["url"])
+        if (src is None or src == "") and pin["attribution"] is not None:
+            src = str(pin["attribution"]["author_url"])
+        if src is None or src == "":
+            src = str(pin["link"])
 
+        title = str(pin['title'])
+
+        description = ""
+
+        if pin["rich_summary"] is not None:
+            description = str(pin['rich_summary']['display_description'])
+        elif pin["description"] is not None:
+            description = str(pin['description'])
+
+        if description is None or description == "":
+            description = str(pin['rich_summary']['display_name'])
+
+        board_link = "https://pinterest.com" + str(pin['board']['url'])
+        board_name = str(pin['board']['name'])
+        return image_url, src, title, description, board_link, board_name, pin
 
     def other(self):
 
