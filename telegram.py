@@ -1,3 +1,5 @@
+import json
+
 import requests
 
 import config
@@ -19,6 +21,11 @@ class Telegram:
 
         response = requests.get(send_text)
 
+        print(json.dumps(response.json(), indent=4))
+
+        if not response.json()['ok']:
+            raise Exception
+
         return response.json()
 
     def send_photo(self, filename):
@@ -30,5 +37,9 @@ class Telegram:
 
         response = requests.post(send_text, files={'photo': image})
 
+        if not response.json()['ok']:
+            raise Exception
+
+        print(json.dumps(response.json(), indent=4))
         return response
 
