@@ -79,7 +79,7 @@ class PinterestConfig:
 
 class LoggingConfig:
     format = '%(funcName)s:%(levelname)s: %(message)s'
-    level = logging.DEBUG
+    level = logging.INFO
 
 
 class TelegramConfig:
