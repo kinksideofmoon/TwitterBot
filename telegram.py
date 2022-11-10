@@ -21,8 +21,6 @@ class Telegram:
 
         response = requests.get(send_text)
 
-        print(json.dumps(response.json(), indent=4))
-
         if not response.json()['ok']:
             raise Exception
 
@@ -35,7 +33,7 @@ class Telegram:
         send_text = 'https://api.telegram.org/bot' + self.__bot_token + \
                     '/sendPhoto?chat_id=' + self.__bot_chatID
 
-        response = requests.post(send_text, files={'photo': image})
+        # response = requests.post(send_text, files={'photo': image})
 
         if not response.json()['ok']:
             raise Exception
