@@ -30,11 +30,15 @@ localconfig = Config()
 
 __twitter = Twitter(localconfig.Twitter)
 
-print("New followers")
+# __twitter.get_private_messages()
+#
+# raise Exception
 
-for follower in __twitter.Followers.get_new():
-    print(follower)
-    telegram_client.send(follower)
+# print("New followers")
+#
+# for follower in __twitter.Followers.get_new():
+#     print(follower)
+#     telegram_client.send(follower)
 
 __pinterest = PinterestWrapper(localconfig.Pinterest)
 

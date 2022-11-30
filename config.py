@@ -1,5 +1,6 @@
 import logging
 import os
+from yaspin import yaspin
 
 
 class TwitterConfig:
@@ -10,6 +11,7 @@ class TwitterConfig:
     access_token = ""
     access_secret = ""
 
+    @yaspin(text="Loading Twitter configuration")
     def __init__(self):
         try:
             self.ClientID = os.environ.get("twitter_clientid")
@@ -42,33 +44,18 @@ class TwitterConfig:
                   " - twitter_clientid\n"
                   " - twitter_clientsecret")
 
-        print("Twitter configuration:\n"
-              "  ClientID: " + self.ClientID + "\n"
-              "  Client Secret: " + self.ClientSecret + "\n"
-              "  ----- \n"
-              "  Consumer Key: " + self.consumer_key + "\n"
-              "  Consumer Secret: " + self.consumer_secret + "\n"
-              "  ----- \n"
-              "  Access Token: " + self.access_token + "\n"
-              "  Access Secret: " + self.access_secret
-              )
-
 
 class PinterestConfig:
     email = ""
     username = ""
     password = ""
 
+    @yaspin(text="Loading Pinterest configuration")
     def __init__(self):
         try:
             self.email = os.environ.get('pinterest_email')
             self.username = os.environ.get('pinterest_username')
             self.password = os.environ.get('pinterest_password')
-
-            print("Pinterest configuration:\n"
-                  " email: " + self.email + "\n"
-                                            " username: " + self.username + "\n"
-                                                                            " password: " + self.password)
 
         except KeyError:
             print("Pinterest Configuration is not ready. Please set OS variables:\n "
@@ -79,11 +66,11 @@ class PinterestConfig:
 
 class LoggingConfig:
     format = '%(funcName)s:%(levelname)s: %(message)s'
-    level = logging.INFO
+    level = logging.ERROR
 
 
 class TelegramConfig:
-
+    @yaspin(text="Loading Telegram configuration")
     def __init__(self):
         try:
             self.api_id = os.environ.get('telegram_apiid')
@@ -98,7 +85,6 @@ class TelegramConfig:
                   " - telegram_token\n"
                   " - telegram_phone\n"
                   " - telegram_chatid")
-
 
 
 class Config:

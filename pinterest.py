@@ -16,6 +16,8 @@ from config import Config
 
 import extras
 
+from yaspin import yaspin
+
 logging.basicConfig(format=Config.Logging.format, level=logging.ERROR)
 
 
@@ -79,11 +81,12 @@ class PinterestWrapper:
         extras.seep_with_progress_bar(60, 'Wait to not overload Pinterest API')
         return _
 
+    @yaspin(text="Getting list of images from all of the boards")
     def __get_list_of_images_from_all_boards(self):
 
         result = {}
 
-        for board in tqdm(self.__boards, desc="Getting the list of images from all boards...", position=0):
+        for board in self.__boards:
             result[board['name']] = self.__get_list_of_images_from_board(board['id'])
             extras.seep_with_progress_bar(10, 'Wait to not overload Pinterest API')
         logging.debug("Found " + str(len(result)) + " pins.")

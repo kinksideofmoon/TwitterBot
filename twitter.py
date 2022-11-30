@@ -1,3 +1,5 @@
+import json
+
 import config
 from config import TwitterConfig
 from config import Config
@@ -6,6 +8,7 @@ import pytwitter
 from pytwitter import PyTwitterError
 import tweepy
 import time
+from yaspin import yaspin
 
 logging.basicConfig(format=Config.Logging.format, level=Config.Logging.level)
 
@@ -81,9 +84,9 @@ class Twitter:
             self.__TweepyAPI = TweepyAPI
             self.__UserID = UserID
 
-            self.__load_last_followers_from_csv(Config.last_followers_cache_file)
-            self.__get_my_followers()
-            self.__check_for_new_followers()
+            # self.__load_last_followers_from_csv(Config.last_followers_cache_file)
+            # self.__get_my_followers()
+            # self.__check_for_new_followers()
 
         def __get_my_followers(self):
             return self.__get_followers(self.__UserID)
@@ -94,6 +97,7 @@ class Twitter:
                 _.append(follower.username)
             return _
 
+        @yaspin(text="Getting followers...")
         def __get_followers(self, user_id):
 
             logging.info("Trying to get the list of current followers...")
@@ -217,6 +221,7 @@ class Twitter:
                     fp.write(str(follower.id) + ';' + str(follower.username) + ";" +
                              str(follower.number_of_tweets) + ";" + str(follower.followed_date) + "\n")
 
+    @yaspin("Initializing Twitter client...")
     def __init__(self, config: TwitterConfig):
         self.__PyTwitterAPI = self.__connect_pytwitter(config)
         self.__TweepyAPI = self.__connect_tweepy(config)
@@ -274,6 +279,7 @@ class Twitter:
                     response.data.id)
                 return response.data.id
 
+    @yaspin("Tweeting image...")
     def tweet_image(self, image_file: str, tweet: str):
 
         try:
@@ -285,3 +291,7 @@ class Twitter:
             pass
         else:
             logging.debug('Media ID: ' + str(media.media_id))
+
+    def get_private_messages(self):
+        messages = self.__TweepyAPI.get_direct_messages
+        print(json.dumps(messages))
