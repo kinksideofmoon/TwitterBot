@@ -73,6 +73,6 @@ def get_random_images_from_pinterest_and_tweet_them(number_of_image_to_be_posted
             # extras.seep_with_progress_bar(60, "Waiting to not overload Twitter API...")
 
 
-get_random_images_from_pinterest_and_tweet_them(10, chosen_board)
+get_random_images_from_pinterest_and_tweet_them(20, chosen_board)
 
 telegram_client.send("...End")
