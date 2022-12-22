@@ -37,7 +37,6 @@ def download_image(image_url: str, destination_dir="./img/"):
 
 
 class PinterestWrapper:
-
     __pinterest = None
     __username = None
     __boards = {}
@@ -129,9 +128,17 @@ class PinterestWrapper:
 
     def get_url_of_random_image_from_list_pinterest(self, board_name: str):
 
-        pin = random.choice(self.__pins[board_name])
-        image_url = str(pin['images']['orig']['url'])
-        src = str(pin['link'])
+        image_url = ""
+        pin = None
+        src = None
+        while image_url == "":
+            pin = random.choice(self.__pins[board_name])
+            try:
+                image_url = str(pin['images']['orig']['url'])
+                src = str(pin['link'])
+            except KeyError:
+                pass
+
         if (src is None or src == "") and pin["rich_summary"] is not None:
             src = str(pin["rich_summary"]["url"])
         if (src is None or src == "") and pin["attribution"] is not None:
@@ -159,9 +166,7 @@ class PinterestWrapper:
 
     def other(self):
 
-
         src_link = str(pin['link'])
-
 
         if not src_link:
             src_link = 'Unknown'
@@ -170,5 +175,3 @@ class PinterestWrapper:
 
     def logout(self):
         self.__pinterest.logout()
-
-
