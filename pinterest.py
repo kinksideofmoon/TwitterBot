@@ -5,6 +5,7 @@ from py3pin.Pinterest import Pinterest
 
 import urllib.request
 import urllib.parse
+from urllib.error import ContentTooShortError
 
 import logging
 
@@ -24,14 +25,11 @@ logging.basicConfig(format=Config.Logging.format, level=logging.ERROR)
 def download_image(image_url: str, destination_dir="./img/"):
     a = urllib.parse.urlparse(image_url)
     image_filename = os.path.basename(a.path)
-
-    image_file = None
-
     try:
         image_file = urllib.request.urlretrieve(image_url, destination_dir + image_filename)
-    except:
-        # ToDo: less generic exception
+    except ContentTooShortError:
         image_filename = None
+        image_file = None
 
     return image_file, image_filename
 
@@ -119,10 +117,23 @@ class PinterestWrapper:
         return pins
 
     def download_random_image_from_board(self, board_name: str):
-        url, src, title, description, board_link, board_name, pin = \
-            self.get_url_of_random_image_from_list_pinterest(board_name)
+
+        src = None
+        url = ""
+        title = ""
+        description = ""
+        board_link = ""
+        pin = ""
+
+        while src is None:
+            url, src, title, description, board_link, board_name, pin = \
+                self.get_url_of_random_image_from_list_pinterest(board_name)
 
         image_file, image_filename = download_image(url)
+
+        assert src is not None, "Source of the image is not known"
+        assert image_file is not None, "Image file is not known"
+        assert image_filename is not None, "Image filename is not known"
 
         return image_file, image_filename, src, title, description, board_link, board_name, pin
 
