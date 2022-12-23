@@ -114,6 +114,6 @@ class Config:
 
     last_followers_cache_file = cache_dir + 'last_followers.csv'
 
-    assert (os.path.exists(temp_dir), temp_dir + " not found")
-    assert (os.path.exists(cache_dir), cache_dir + " not found")
-    assert (os.path.exists(last_followers_cache_file), last_followers_cache_file + " not found!")
+    assert os.path.exists(temp_dir), temp_dir + " not found"
+    assert os.path.exists(cache_dir), cache_dir + " not found"
+    assert os.path.exists(last_followers_cache_file), last_followers_cache_file + " not found!"
