@@ -118,16 +118,8 @@ class PinterestWrapper:
 
     def download_random_image_from_board(self, board_name: str):
 
-        src = None
-        url = ""
-        title = ""
-        description = ""
-        board_link = ""
-        pin = ""
-
-        while src is None:
-            url, src, title, description, board_link, board_name, pin = \
-                self.get_url_of_random_image_from_list_pinterest(board_name)
+        url, src, title, description, board_link, board_name, pin = \
+            self.get_url_of_random_image_from_list_pinterest(board_name)
 
         image_file, image_filename = download_image(url)
 
@@ -139,17 +131,19 @@ class PinterestWrapper:
 
     def get_url_of_random_image_from_list_pinterest(self, board_name: str):
 
-        image_url = ""
         pin = None
         src = None
-        while image_url == "":
-            pin = random.choice(self.__pins[board_name])
-            try:
-                image_url = str(pin['images']['orig']['url'])
-                src = str(pin['link'])
-            except KeyError:
-                pass
+        image_url = None
 
+        while src is None:
+            image_url, pin, src = self.__get_non_empty_random_image_url(board_name, pin, src)
+
+        board_link, board_name, description, src, title = self.__prepare_meta_for_pin(pin, src)
+
+        return image_url, src, title, description, board_link, board_name, pin
+
+    @staticmethod
+    def __prepare_meta_for_pin(pin, src):
         if (src is None or src == "") and pin["rich_summary"] is not None:
             src = str(pin["rich_summary"]["url"])
         if (src is None or src == "") and pin["attribution"] is not None:
@@ -158,22 +152,28 @@ class PinterestWrapper:
             src = str(pin["attribution"]["author_url"])
         if src is None or src == "":
             src = str(pin["link"])
-
         title = str(pin['title'])
-
         description = ""
-
         if pin["rich_summary"] is not None:
             description = str(pin['rich_summary']['display_description'])
         elif pin["description"] is not None:
             description = str(pin['description'])
-
         if description is None or description == "":
             description = str(pin['rich_summary']['display_name'])
-
         board_link = "https://pinterest.com" + str(pin['board']['url'])
         board_name = str(pin['board']['name'])
-        return image_url, src, title, description, board_link, board_name, pin
+        return board_link, board_name, description, src, title
+
+    def __get_non_empty_random_image_url(self, board_name, pin, src):
+        image_url = ""
+        while image_url == "":
+            pin = random.choice(self.__pins[board_name])
+            try:
+                image_url = str(pin['images']['orig']['url'])
+                src = str(pin['link'])
+            except KeyError:
+                pass
+        return image_url, pin, src
 
     def other(self):
 
