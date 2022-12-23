@@ -96,4 +96,24 @@ class Config:
     temp_dir = './img/'
     cache_dir = './cache/'
 
+    print("Configuration:")
+
+    if not os.path.exists(temp_dir):
+        print("\t" + temp_dir + " not exists, trying to create one...")
+        os.mkdir(temp_dir)
+        print("\t\t... done.")
+    else:
+        print("\tFound temp_dir: " + temp_dir)
+
+    if not os.path.exists(cache_dir):
+        print("\t" + cache_dir + " not exists, trying to create one...")
+        os.mkdir(cache_dir)
+        print("\t\t... done.")
+    else:
+        print("\tFound cache_dir: " + cache_dir)
+
     last_followers_cache_file = cache_dir + 'last_followers.csv'
+
+    assert (os.path.exists(temp_dir), temp_dir + " not found")
+    assert (os.path.exists(cache_dir), cache_dir + " not found")
+    assert (os.path.exists(last_followers_cache_file), last_followers_cache_file + " not found!")
