@@ -32,13 +32,27 @@ __twitter = Twitter(localconfig.Twitter)
 
 # __twitter.get_private_messages()
 #
-# raise Exception
 
-# print("New followers")
-#
-# for follower in __twitter.Followers.get_new():
-#     print(follower)
-#     telegram_client.send(follower)
+string_to_send = "<b>New followers: </b>"
+
+for follower in __twitter.Followers.new():
+    string_to_send = string_to_send + "\nhttps://twitter.com/" + follower
+
+telegram_client.send(string_to_send)
+
+string_to_send = "----------------------\nLost followers:"
+
+for follower in __twitter.Followers.lost():
+    string_to_send = string_to_send + "\nhttps://twitter.com/" + follower
+
+telegram_client.send(string_to_send)
+
+string_to_send = "----------------------\n<b>To follow back:</b>"
+
+for follower in __twitter.to_follow_back():
+    string_to_send = string_to_send + "\nhttps://twitter.com/" + follower
+
+telegram_client.send(string_to_send)
 
 __pinterest = PinterestWrapper(localconfig.Pinterest)
 
