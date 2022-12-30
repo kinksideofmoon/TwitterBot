@@ -18,7 +18,7 @@ class Telegram:
 
     def send(self, message):
         send_text = 'https://api.telegram.org/bot' + self.__bot_token + \
-                    '/sendMessage?chat_id=' + self.__bot_chatID + '&parse_mode=Markdown&text=' + message
+                    '/sendMessage?chat_id=' + self.__bot_chatID + '&text=' + message
 
         response = requests.get(send_text)
 
