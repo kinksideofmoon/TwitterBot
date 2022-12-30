@@ -13,6 +13,41 @@ from yaspin import yaspin
 logging.basicConfig(format=Config.Logging.format, level=Config.Logging.level)
 
 
+class User:
+    __username = ""
+    __id = ""
+    __number_of_tweets = int
+
+    def __init__(self, username, id, number_of_tweets):
+        self.__username = username
+        self.__id = id
+        self.__number_of_tweets = number_of_tweets
+
+    @property
+    def username(self):
+        return self.__username
+
+    @username.setter
+    def username_setter(self):
+        raise Warning("The username value can be set only during the initialization of the object.")
+
+    @property
+    def id(self):
+        return self.__id
+
+    @id.setter
+    def id_setter(self):
+        raise Warning("The id value can be set only during the initialization of the object.")
+
+    @property
+    def number_of_tweets(self):
+        return self.__number_of_tweets
+
+    @number_of_tweets.setter
+    def number_of_tweets_setter(self):
+        raise Warning("The number_of_tweets value can be set only during the initialization of the object.")
+
+
 class Twitter:
     __PyTwitterAPi = None
     __TweepyAPI = None
@@ -30,41 +65,7 @@ class Twitter:
         __last_followers = []
         __new_followers = []
 
-        class __User:
-            __username = ""
-            __id = ""
-            __number_of_tweets = int
-
-            def __init__(self, username, id, number_of_tweets):
-                self.__username = username
-                self.__id = id
-                self.__number_of_tweets = number_of_tweets
-
-            @property
-            def username(self):
-                return self.__username
-
-            @username.setter
-            def username_setter(self):
-                raise Warning("The username value can be set only during the initialization of the object.")
-
-            @property
-            def id(self):
-                return self.__id
-
-            @id.setter
-            def id_setter(self):
-                raise Warning("The id value can be set only during the initialization of the object.")
-
-            @property
-            def number_of_tweets(self):
-                return self.__number_of_tweets
-
-            @number_of_tweets.setter
-            def number_of_tweets_setter(self):
-                raise Warning("The number_of_tweets value can be set only during the initialization of the object.")
-
-        class __Follower(__User):
+        class __Follower(User):
             __followed_date = int
 
             def __init__(self, username, id, number_of_tweets=-1, followed_date=-1):
@@ -84,21 +85,28 @@ class Twitter:
             self.__TweepyAPI = TweepyAPI
             self.__UserID = UserID
 
-            # self.__load_last_followers_from_csv(Config.last_followers_cache_file)
-            # self.__get_my_followers()
-            # self.__check_for_new_followers()
+            self.__load_last_followers_from_csv(Config.last_followers_cache_file)
+            self.__get_my_followers()
+            self.__check_for_new_followers()
 
         def __get_my_followers(self):
             return self.__get_followers(self.__UserID)
 
-        def get_new(self):
+        def new(self):
             _ = []
             for follower in self.__new_followers:
                 _.append(follower.username)
             return _
 
-        @yaspin(text="Getting followers...")
-        def __get_followers(self, user_id):
+        def all(self):
+            _ = []
+            for follower in self.__followers:
+                _.append(follower.username)
+            logging.debug("Return " + str(len(_)) + " followers.")
+            return _
+
+        # @yaspin(text="Getting followers...")
+        def __get_followers(self, user_id: object) -> object:
 
             logging.info("Trying to get the list of current followers...")
 
@@ -115,21 +123,26 @@ class Twitter:
             for number_of_try in range(1, 3):
                 try:
                     logging.debug("Try " + str(number_of_try))
-                    response = self.__PyTwitterAPI.get_followers(user_id=user_id, pagination_token=next_token)
+                    response = self.__PyTwitterAPI.get_followers(user_id=user_id, pagination_token=next_token,
+                                                                 max_results=config.TwitterConfig.max_results)
                     for user in response.data:
                         self.__setitem__(user.id, user.username)
                     next_token = response.meta.next_token
                     logging.debug("... get " + str(len(self)) + " followers.")
                     logging.debug("... next page token is: " + str(next_token))
                 except PyTwitterError as ex:
-                    logging.error("... failed, " + str(ex.message) + "retrying " + str(number_of_try) +
-                                  " after 60 sec.")
+                    if ex.message['title'] == "Too Many Requests":
+                        logging.error("... failed, " + str(ex.message) + ", retrying " + str(number_of_try) +
+                                      " after " + str(number_of_try * 60) + " sec.")
+                        time.sleep(number_of_try * 60)
+                    else:
+                        raise ex
                 else:
                     break
                 finally:
-                    logging.debug("... waiting 60 sec to not overload Twitter API ...")
                     if next_token is not None:
-                        time.sleep(60)
+                        logging.debug("... waiting 30 sec to not overload Twitter API ...")
+                        time.sleep(30)
             return next_token
 
         def __setitem__(self, id, username, number_of_tweets=-1, followed_date=-1):
@@ -157,6 +170,20 @@ class Twitter:
                     self.__new_followers.append(follower)
             logging.info("Found " + str(len(self.__new_followers)) + " new followers.")
 
+        def lost(self, user_id=__UserID):
+            _ = []
+            for last_follower in self.__last_followers:
+                found_match = False
+                for follower in self.__followers:
+                    if last_follower.username == follower.username:
+                        found_match = True
+                        break
+                if not found_match:
+                    _.append(last_follower.username)
+                    logging.debug("Lost " + last_follower.username)
+            logging.debug("Found " + str(len(_)) + " lost followers")
+            return _
+
         def __load_last_followers_from_csv(self, filename):
 
             logging.info("Load file: " + filename)
@@ -174,52 +201,100 @@ class Twitter:
             finally:
                 logging.info("... successfully load the file. Found " + str(len(self.__last_followers)) + " entries.")
 
-        def get_following(self, user_id):
-
-            logging.info("Get following users...")
-            following = []
-            response = self.__PyTwitterAPI.get_following(user_id=user_id)
-            following += response.data
-            next_token = response.meta.next_token
-
-            if next_token is None:
-                logging.debug("... no next page token, finishing the task.")
-            else:
-                logging.debug("... waiting 60 sec to not overload Twitter API ...")
-                time.sleep(60)
-            while next_token is not None:
-
-                try:
-                    response = self.__PyTwitterAPI.get_following(user_id=user_id, pagination_token=next_token)
-                except Exception as ex:
-                    logging.error("... failed, " + ex)
-
-                following += response.data
-
-                logging.debug("... get another " + str(len(response.data)) + " following.")
-
-                next_token = response.meta.next_token
-                logging.debug("... next page token is: " + str(next_token))
-
-                if next_token is None:
-                    logging.debug("... no next page token, finishing the task.")
-                    break
-                else:
-                    logging.debug("... waiting 60 sec to not overload Twitter API ...")
-                    time.sleep(60)
-            logging.info("Get " + str(len(following)) + " following.")
-
-            return following
-
-        def check_for_new_following(self, user_id):
-            pass
-
         def __save_followers_to_csv(self, filename: str):
             with open(filename, 'w', encoding='utf-8', errors='ignore', newline='\n') as fp:
                 fp.write("id;username;number_of_tweets;followed_date\n")
                 for follower in self.__followers:
                     fp.write(str(follower.id) + ';' + str(follower.username) + ";" +
                              str(follower.number_of_tweets) + ";" + str(follower.followed_date) + "\n")
+
+    class __Followings:
+
+        __PyTwitterAPI = None
+        __TweepyAPI = None
+        __UserID = None
+
+        __following = []
+
+        class __Following(User):
+            def __init__(self, username, id, number_of_tweets=-1):
+                super().__init__(username=username, id=id, number_of_tweets=number_of_tweets)
+
+        def __init__(self, PyTwitterAPI, TweepyAPI, UserID):
+            self.__PyTwitterAPI = PyTwitterAPI
+            self.__TweepyAPI = TweepyAPI
+            self.__UserID = UserID
+
+            self.__get_following(self.__UserID)
+
+        def __setitem__(self, id, username, number_of_tweets=-1):
+
+            for following in self.__following:
+                if following.id == id:
+                    break
+            else:
+                self.__following.append(self.__Following(username=username, id=id,
+                                                         number_of_tweets=number_of_tweets))
+
+        def __len__(self):
+            return len(self.__following)
+
+        def __iter__(self):
+            raise NotImplemented
+
+        def __get_paginated_following(self, next_token=None, user_id=__UserID):
+            for number_of_try in range(1, 3):
+                try:
+                    logging.debug("Try " + str(number_of_try))
+                    response = self.__PyTwitterAPI.get_following(user_id=user_id, pagination_token=next_token,
+                                                                 max_results=config.TwitterConfig.max_results)
+                    for user in response.data:
+                        self.__following.append(self.__Following(username=user.username,
+                                                                 id=user.id,
+                                                                 number_of_tweets=-1))
+                    next_token = response.meta.next_token
+                    logging.debug("... get " + str(len(self)) + " following.")
+                    logging.debug("... next page token is: " + str(next_token))
+                except PyTwitterError as ex:
+                    if ex.message['title'] == "Too Many Requests":
+                        logging.error("... failed, " + str(ex.message) + ", retrying " + str(number_of_try) +
+                                      " after " + str(number_of_try * 60) + " sec.")
+                        time.sleep(number_of_try * 60)
+                    else:
+                        raise ex
+                else:
+                    break
+                finally:
+                    if next_token is not None:
+                        logging.debug("... waiting 30 sec to not overload Twitter API ...")
+                        time.sleep(30)
+            return next_token
+
+        def __get_following(self, user_id):
+            logging.info("Trying to get the list of current following...")
+
+            next_token = self.__get_paginated_following(user_id=self.__UserID, next_token=None)
+
+            while next_token is not None:
+                next_token = self.__get_paginated_following(next_token, user_id)
+
+            logging.info("Get " + str(len(self)) + " following.")
+
+            self.__save_following_to_csv(filename=Config.last_following_cache_file)
+
+        def __save_following_to_csv(self, filename: str):
+            with open(filename, 'w', encoding='utf-8', errors='ignore', newline='\n') as fp:
+                fp.write("id;username;number_of_tweets\n")
+                for following in self.__following:
+                    fp.write(str(following.id) + ';' + str(following.username) + ";" +
+                             str(following.number_of_tweets) + "\n")
+
+        def all(self):
+            _ = []
+            for following in self.__following:
+                _.append(following.username)
+            logging.debug("Return " + str(len(_)) + " following.")
+            return _
 
     @yaspin("Initializing Twitter client...")
     def __init__(self, config: TwitterConfig):
@@ -229,6 +304,9 @@ class Twitter:
         self.Followers = self.__Followers(PyTwitterAPI=self.__PyTwitterAPI,
                                           TweepyAPI=self.__TweepyAPI,
                                           UserID=self.__UserID)
+        self.Following = self.__Followings(PyTwitterAPI=self.__PyTwitterAPI,
+                                           TweepyAPI=self.__TweepyAPI,
+                                           UserID=self.__UserID)
 
     def __connect_tweepy(self, config):
         try:
@@ -295,3 +373,26 @@ class Twitter:
     def get_private_messages(self):
         messages = self.__TweepyAPI.get_direct_messages
         print(json.dumps(messages))
+
+    def two_side_followers(self):
+        _ = []
+        for following in self.Following.all():
+            for follower in self.Followers.all():
+                if following == follower:
+                    _.append(follower)
+                    break
+        return _
+
+    def to_follow_back(self):
+        _ = []
+        for follower in self.Followers.all():
+            found_match = False
+            for following in self.Following.all():
+                if following == follower:
+                    found_match = True
+                    logging.debug("Found match - follower: " + follower + ", following: " + following)
+                    break
+            if not found_match:
+                _.append(follower)
+        logging.debug("Found " + str(len(_)) + " followers to follow back")
+        return _
