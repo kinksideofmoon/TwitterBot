@@ -11,6 +11,8 @@ class TwitterConfig:
     access_token = ""
     access_secret = ""
 
+    max_results = 500
+
     @yaspin(text="Loading Twitter configuration")
     def __init__(self):
         try:
@@ -66,7 +68,7 @@ class PinterestConfig:
 
 class LoggingConfig:
     format = '%(funcName)s:%(levelname)s: %(message)s'
-    level = logging.ERROR
+    level = logging.DEBUG
 
 
 class TelegramConfig:
@@ -113,11 +115,17 @@ class Config:
         print("\tFound cache_dir: " + cache_dir)
 
     last_followers_cache_file = cache_dir + 'last_followers.csv'
+    last_following_cache_file = cache_dir + 'last_following.csv'
 
     if not os.path.exists(last_followers_cache_file):
         with open(last_followers_cache_file, 'w') as file:
             pass
 
+    if not os.path.exists(last_following_cache_file):
+        with open(last_following_cache_file, 'w') as file:
+            pass
+
     assert os.path.exists(temp_dir), temp_dir + " not found"
     assert os.path.exists(cache_dir), cache_dir + " not found"
     assert os.path.exists(last_followers_cache_file), last_followers_cache_file + " not found!"
+    assert os.path.exists(last_following_cache_file), last_followers_cache_file + " not found!"
