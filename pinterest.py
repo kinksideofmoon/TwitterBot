@@ -134,10 +134,15 @@ class PinterestWrapper:
         pin = None
         src = None
         image_url = None
+        found_source = False
 
-        while src is None:
-            while "tumblr" in src:
-                image_url, pin, src = self.__get_non_empty_random_image_url(board_name, pin, src)
+        while not found_source:
+            image_url, pin, src = self.__get_non_empty_random_image_url(board_name, pin, src)
+
+            if "tumblr" in src or "flickr" in src:
+                found_source = False
+            else:
+                found_source = True
 
         board_link, board_name, description, src, title = self.__prepare_meta_for_pin(pin, src)
 
